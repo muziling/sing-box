@@ -40,6 +40,8 @@ func ParseSubscriptionLink(link string) (option.Outbound, error) {
 		return parseHysteria2Link(link)
 	case "anytls":
 		return parseAnyTLSLink(link)
+	case "socks":
+		return parseSocksLink(link)
 	}
 	result[3], _ = DecodeBase64URLSafe(result[3])
 	link = strings.Join(result[1:], "")
@@ -761,6 +763,24 @@ func parseAnyTLSLink(link string) (option.Outbound, error) {
 		Tag:  linkURL.Fragment,
 	}
 	options.TLS = &TLSOptions
+	outbound.Options = &options
+	return outbound, nil
+}
+
+func parseSocksLink(link string) (option.Outbound, error) {
+	linkURL, err := url.Parse(link)
+	if err != nil {
+		return option.Outbound{}, err
+	}
+	var options option.SOCKSOutboundOptions
+	options.Server = linkURL.Hostname()
+	options.ServerPort = StringToType[uint16](linkURL.Port())
+	options.Username = linkURL.User.Username()
+	options.Password, _ = linkURL.User.Password()
+	outbound := option.Outbound{
+		Type: C.TypeSOCKS,
+		Tag:  linkURL.Fragment,
+	}
 	outbound.Options = &options
 	return outbound, nil
 }
